@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Preview Widget</title>
+    <script src="https://cdn.jotfor.ms/s/umd/latest/for-custom-widgets.js"></script>
+    <script>
+      class FontPreviewWidget {
+        constructor() {
+          this.init();
+        }
+
+        init() {
+          this.createElements();
+          this.loadGoogleFonts();
+          this.attachEvents();
+          JFCustomWidget.subscribe("ready", () => this.updatePreview());
+        }
+
+        createElements() {
+          this.container = document.getElementById("widgetContainer");
+          
+          // Font Selector Dropdown
+          this.fontSelect = document.getElementById("fontSelect");
+          
+          // Input Box
+          this.textInput = document.getElementById("textInput");
+
+          // Text Preview Box
+          this.textPreview = document.getElementById("textPreview");
+          
+          JFCustomWidget.requestFrameResize({ height: this.container.scrollHeight + 20 });
+        }
+
+        loadGoogleFonts() {
+          const fonts = ["Arial", "Courier New", "Georgia", "Times New Roman", "Verdana"];
+          
+          fetch("https://www.googleapis.com/webfonts/v1/webfonts?key=YOUR_GOOGLE_FONTS_API_KEY")
+            .then(response => response.json())
+            .then(data => {
+              if (data.items) {
+                data.items.slice(0, 50).forEach(font => {
+                  fonts.push(font.family);
+                  const option = document.createElement("option");
+                  option.value = font.family;
+                  option.textContent = font.family;
+                  this.fontSelect.appendChild(option);
+                });
+              }
+            });
+        }
+
+        attachEvents() {
+          this.fontSelect.addEventListener("change", () => this.updatePreview());
+          this.textInput.addEventListener("input", () => this.updatePreview());
+          JFCustomWidget.subscribe("submit", () => this.submitData());
+        }
+
+        updatePreview() {
+          const selectedFont = this.fontSelect.value;
+          this.textPreview.style.fontFamily = selectedFont;
+          this.textPreview.textContent = this.textInput.value || "Your text will appear here";
+          
+          if (!document.querySelector(`link[href*='${selectedFont.replace(/ /g, "+")}]`)) {
+            const link = document.createElement("link");
+            link.href = `https://fonts.googleapis.com/css?family=${selectedFont.replace(/ /g, "+")}`;
+            link.rel = "stylesheet";
+            document.head.appendChild(link);
+          }
+        }
+
+        submitData() {
+          const data = {
+            valid: true,
+            value: JSON.stringify({
+              font: this.fontSelect.value,
+              text: this.textInput.value
+            })
+          };
+          JFCustomWidget.sendSubmit(data);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        new FontPreviewWidget();
+      });
+    </script>
+</head>
+<body>
+    <div id="widgetContainer" style="font-family: Arial, sans-serif; width: 100%; max-width: 400px;">
+        <label for="fontSelect">Choose a font:</label>
+        <select id="fontSelect" style="width: 100%; margin-top: 5px;"></select>
+        
+        <label for="textInput" style="margin-top: 10px; display: block;">Enter your text:</label>
+        <input id="textInput" type="text" placeholder="Enter your text here" style="width: 100%; margin-top: 5px;">
+        
+        <div id="textPreview" style="margin-top: 10px; padding: 10px; border: 1px solid #ccc; font-size: 20px;">
+            Your text will appear here
+        </div>
+    </div>
+</body>
+</html>
