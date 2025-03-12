@@ -13,8 +13,10 @@
 
         init() {
           this.createElements();
-          this.attachEvents();
-          JFCustomWidget.subscribe("ready", () => this.requestFontSelection());
+          JFCustomWidget.subscribe("ready", () => {
+            this.requestFontSelection();
+            this.attachEvents();
+          });
         }
 
         createElements() {
@@ -74,6 +76,10 @@
 
         submitData() {
           const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
+          if (!fontField) {
+            JFCustomWidget.sendSubmit({ valid: false, error: "Font field name not set" });
+            return;
+          }
           
           JFCustomWidget.getFieldsValueByName([fontField], (data) => {
             const selectedFont = data && data[fontField] ? data[fontField] : "";
