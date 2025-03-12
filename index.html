@@ -32,7 +32,7 @@
           
           JFCustomWidget.getFieldsValueByName([fontField], (data) => {
             if (data[fontField]) {
-              this.applyFont(data[fontField]);
+              this.loadAndApplyFont(data[fontField]);
             }
           });
         }
@@ -42,29 +42,43 @@
           if (!fontField) return;
           
           JFCustomWidget.listenFromField(fontField, "change", (value) => {
-            this.applyFont(value);
+            this.loadAndApplyFont(value);
           });
           this.textArea.addEventListener("input", () => this.updatePreview());
           JFCustomWidget.subscribe("submit", () => this.submitData());
         }
 
-        applyFont(selectedFont) {
+        loadAndApplyFont(selectedFont) {
           if (!selectedFont) return;
-          this.textArea.style.fontFamily = selectedFont;
           
-          if (!document.querySelector(`link[href*='${selectedFont.replace(/ /g, "+")}]`)) {
+          const fontLinkId = `google-font-${selectedFont.replace(/ /g, "-")}`;
+          
+          if (!document.getElementById(fontLinkId)) {
             const link = document.createElement("link");
-            link.href = `https://fonts.googleapis.com/css?family=${selectedFont.replace(/ /g, "+")}&display=swap`;
+            link.id = fontLinkId;
+            link.href = `https://fonts.googleapis.com/css?family=${encodeURIComponent(selectedFont)}&display=swap`;
             link.rel = "stylesheet";
             document.head.appendChild(link);
+            
+            link.onload = () => {
+              this.applyFont(selectedFont);
+            };
+          } else {
+            this.applyFont(selectedFont);
           }
         }
 
+        applyFont(selectedFont) {
+          this.textArea.style.fontFamily = `'${selectedFont}', sans-serif`;
+        }
+
         submitData() {
+          const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
           const data = {
             valid: true,
             value: JSON.stringify({
-              text: this.textArea.value
+              text: this.textArea.value,
+              font: fontField ? JFCustomWidget.getFieldsValueByName([fontField], (data) => data[fontField]) : ""
             })
           };
           JFCustomWidget.sendSubmit(data);
