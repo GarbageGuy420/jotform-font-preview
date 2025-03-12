@@ -13,16 +13,12 @@
 
         init() {
           this.createElements();
-          this.populateFonts();
           this.attachEvents();
-          JFCustomWidget.subscribe("ready", () => this.updatePreview());
+          JFCustomWidget.subscribe("ready", () => this.requestFontSelection());
         }
 
         createElements() {
           this.container = document.getElementById("widgetContainer");
-          
-          // Font Selector Dropdown
-          this.fontSelect = document.getElementById("fontSelect");
           
           // Large Text Area for Preview/Input
           this.textArea = document.getElementById("textArea");
@@ -30,28 +26,23 @@
           JFCustomWidget.requestFrameResize({ height: this.container.scrollHeight + 20 });
         }
 
-        populateFonts() {
-          const fonts = [
-            "Arial", "Courier New", "Georgia", "Times New Roman", "Verdana",
-            "Roboto", "Lobster", "Pacifico", "Bebas Neue", "Dancing Script"
-          ];
-
-          fonts.forEach(font => {
-            const option = document.createElement("option");
-            option.value = font;
-            option.textContent = font;
-            this.fontSelect.appendChild(option);
+        requestFontSelection() {
+          JFCustomWidget.getFieldsValueByName([JFCustomWidget.getWidgetSetting('fontFieldName')], (data) => {
+            if (data.fontPicker) {
+              this.applyFont(data.fontPicker);
+            }
           });
         }
 
         attachEvents() {
-          this.fontSelect.addEventListener("change", () => this.updatePreview());
+          JFCustomWidget.listenFromField(JFCustomWidget.getWidgetSetting('fontFieldName'), 'change', (value) => {
+            this.applyFont(value);
+          });
           this.textArea.addEventListener("input", () => this.updatePreview());
           JFCustomWidget.subscribe("submit", () => this.submitData());
         }
 
-        updatePreview() {
-          const selectedFont = this.fontSelect.value;
+        applyFont(selectedFont) {
           this.textArea.style.fontFamily = selectedFont;
           
           if (!document.querySelector(`link[href*='${selectedFont.replace(/ /g, "+")}]`)) {
@@ -66,7 +57,6 @@
           const data = {
             valid: true,
             value: JSON.stringify({
-              font: this.fontSelect.value,
               text: this.textArea.value
             })
           };
@@ -105,9 +95,6 @@
 </head>
 <body>
     <div id="widgetContainer">
-        <label for="fontSelect">Choose a font:</label>
-        <select id="fontSelect" style="width: 100%; margin-top: 5px;"></select>
-        
         <textarea id="textArea" placeholder="Enter your text here">Your text will appear here</textarea>
     </div>
 </body>
