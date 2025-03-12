@@ -8,55 +8,69 @@
     <script>
       class FontPreviewWidget {
         constructor() {
+          this.fonts = {
+            "Handwriting": "Dancing Script",
+            "Script (Simple)": "Pacifico",
+            "Script (Fancy)": "Great Vibes",
+            "Simple (Sans-Serif)": "Helvetica, Arial, sans-serif",
+            "Classic (Serif)": "Times New Roman, serif",
+            "Gothic/Old English": "Old English Text MT, UnifrakturMaguntia, serif",
+            "Other": "Webdings"
+          };
           this.init();
         }
 
         init() {
           this.createElements();
+          this.populateFontDropdown();
           this.attachEvents();
-          JFCustomWidget.subscribe("ready", () => this.requestFontSelection());
+          this.loadAllFonts();
+          JFCustomWidget.subscribe("ready", () => this.sendData());
         }
 
         createElements() {
           this.container = document.getElementById("widgetContainer");
-          
-          // Large Text Area for Preview/Input
+          this.fontSelect = document.getElementById("fontSelect");
           this.textArea = document.getElementById("textArea");
           
           JFCustomWidget.requestFrameResize({ height: this.container.scrollHeight + 20 });
         }
 
-        requestFontSelection() {
-          JFCustomWidget.getFieldsValueByName([JFCustomWidget.getWidgetSetting('fontFieldName')], (data) => {
-            if (data.fontPicker) {
-              this.applyFont(data.fontPicker);
-            }
+        populateFontDropdown() {
+          Object.keys(this.fonts).forEach(label => {
+            const option = document.createElement("option");
+            option.value = this.fonts[label];
+            option.textContent = label;
+            option.style.fontFamily = "Arial, sans-serif"; // Keep dropdown text readable
+            this.fontSelect.appendChild(option);
           });
+          this.loadAndApplyFont(Object.values(this.fonts)[0]);
         }
 
         attachEvents() {
-          JFCustomWidget.listenFromField(JFCustomWidget.getWidgetSetting('fontFieldName'), 'change', (value) => {
-            this.applyFont(value);
-          });
-          this.textArea.addEventListener("input", () => this.updatePreview());
-          JFCustomWidget.subscribe("submit", () => this.submitData());
+          this.fontSelect.addEventListener("change", () => this.loadAndApplyFont(this.fontSelect.value));
+          this.textArea.addEventListener("input", () => this.sendData());
         }
 
-        applyFont(selectedFont) {
-          this.textArea.style.fontFamily = selectedFont;
-          
-          if (!document.querySelector(`link[href*='${selectedFont.replace(/ /g, "+")}]`)) {
-            const link = document.createElement("link");
-            link.href = `https://fonts.googleapis.com/css?family=${selectedFont.replace(/ /g, "+")}&display=swap`;
-            link.rel = "stylesheet";
-            document.head.appendChild(link);
-          }
+        loadAllFonts() {
+          const googleFonts = ["Dancing Script", "Pacifico", "Great Vibes", "UnifrakturMaguntia"];
+          const link = document.createElement("link");
+          link.href = `https://fonts.googleapis.com/css?family=${googleFonts.map(font => font.replace(/ /g, "+")).join("|")}&display=swap`;
+          link.rel = "stylesheet";
+          document.head.appendChild(link);
         }
 
-        submitData() {
+        loadAndApplyFont(selectedFont) {
+          if (!selectedFont) return;
+          this.textArea.style.fontFamily = `'${selectedFont}', sans-serif`;
+          this.sendData();
+        }
+
+        sendData() {
           const data = {
             valid: true,
             value: JSON.stringify({
+              font: this.fontSelect.value,
               text: this.textArea.value
             })
           };
@@ -82,6 +96,11 @@
             width: 100%;
             max-width: 500px;
         }
+        select {
+            width: 100%;
+            padding: 5px;
+            margin-top: 10px;
+        }
         #textArea {
             width: 100%;
             height: 200px;
@@ -95,7 +114,9 @@
 </head>
 <body>
     <div id="widgetContainer">
-        <textarea id="textArea" placeholder="Enter your text here">Your text will appear here</textarea>
+        <label for="fontSelect">Choose a style:</label>
+        <select id="fontSelect"></select>
+        <textarea id="textArea" placeholder="Enter your text here"></textarea>
     </div>
 </body>
 </html>
