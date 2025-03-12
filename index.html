@@ -31,7 +31,7 @@
           if (!fontField) return;
           
           JFCustomWidget.getFieldsValueByName([fontField], (data) => {
-            if (data[fontField]) {
+            if (data && data[fontField]) {
               this.loadAndApplyFont(data[fontField]);
             }
           });
@@ -74,14 +74,20 @@
 
         submitData() {
           const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
-          const data = {
-            valid: true,
-            value: JSON.stringify({
-              text: this.textArea.value,
-              font: fontField ? JFCustomWidget.getFieldsValueByName([fontField], (data) => data[fontField]) : ""
-            })
-          };
-          JFCustomWidget.sendSubmit(data);
+          
+          JFCustomWidget.getFieldsValueByName([fontField], (data) => {
+            const selectedFont = data && data[fontField] ? data[fontField] : "";
+            
+            const submissionData = {
+              valid: true,
+              value: JSON.stringify({
+                text: this.textArea.value,
+                font: selectedFont
+              })
+            };
+            
+            JFCustomWidget.sendSubmit(submissionData);
+          });
         }
       }
 
