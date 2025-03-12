@@ -27,15 +27,21 @@
         }
 
         requestFontSelection() {
-          JFCustomWidget.getFieldsValueByName([JFCustomWidget.getWidgetSetting('fontFieldName')], (data) => {
-            if (data.fontPicker) {
-              this.applyFont(data.fontPicker);
+          const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
+          if (!fontField) return;
+          
+          JFCustomWidget.getFieldsValueByName([fontField], (data) => {
+            if (data[fontField]) {
+              this.applyFont(data[fontField]);
             }
           });
         }
 
         attachEvents() {
-          JFCustomWidget.listenFromField(JFCustomWidget.getWidgetSetting('fontFieldName'), 'change', (value) => {
+          const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
+          if (!fontField) return;
+          
+          JFCustomWidget.listenFromField(fontField, "change", (value) => {
             this.applyFont(value);
           });
           this.textArea.addEventListener("input", () => this.updatePreview());
@@ -43,6 +49,7 @@
         }
 
         applyFont(selectedFont) {
+          if (!selectedFont) return;
           this.textArea.style.fontFamily = selectedFont;
           
           if (!document.querySelector(`link[href*='${selectedFont.replace(/ /g, "+")}]`)) {
