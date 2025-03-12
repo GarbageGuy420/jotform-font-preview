@@ -17,7 +17,7 @@
 
         init() {
           this.createElements();
-          this.loadAllFonts(); // Preload all fonts
+          this.loadAllFonts(); // Preload all fonts properly
           this.populateFontDropdown();
           this.attachEvents();
           JFCustomWidget.subscribe("ready", () => this.sendData());
@@ -32,10 +32,10 @@
         }
 
         loadAllFonts() {
-          const link = document.createElement("link");
-          link.href = `https://fonts.googleapis.com/css?family=${this.fonts.map(font => font.replace(/ /g, "+")).join("|")}&display=swap`;
-          link.rel = "stylesheet";
-          document.head.appendChild(link);
+          const fontLink = document.createElement("link");
+          fontLink.href = `https://fonts.googleapis.com/css2?${this.fonts.map(font => "family=" + font.replace(/ /g, "+")).join("&")}";
+          fontLink.rel = "stylesheet";
+          document.head.appendChild(fontLink);
         }
 
         populateFontDropdown() {
@@ -43,7 +43,7 @@
             const option = document.createElement("option");
             option.value = font;
             option.textContent = font;
-            option.style.fontFamily = font;
+            option.style.fontFamily = `'${font}', sans-serif`;
             this.fontSelect.appendChild(option);
           });
           this.loadAndApplyFont(this.fonts[0]);
