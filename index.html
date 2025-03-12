@@ -14,6 +14,7 @@
         init() {
           this.createElements();
           JFCustomWidget.subscribe("ready", () => {
+            console.log("Widget ready. Fetching font selection...");
             this.requestFontSelection();
             this.attachEvents();
           });
@@ -30,11 +31,17 @@
 
         requestFontSelection() {
           const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
-          if (!fontField) return;
+          if (!fontField) {
+            console.warn("No font field name provided in settings.");
+            return;
+          }
           
           JFCustomWidget.getFieldsValueByName([fontField], (data) => {
+            console.log("Font data retrieved:", data);
             if (data && data[fontField]) {
               this.loadAndApplyFont(data[fontField]);
+            } else {
+              console.warn("No font selected from the form.");
             }
           });
         }
@@ -44,6 +51,7 @@
           if (!fontField) return;
           
           JFCustomWidget.listenFromField(fontField, "change", (value) => {
+            console.log("Font changed to:", value);
             this.loadAndApplyFont(value);
           });
           this.textArea.addEventListener("input", () => this.updatePreview());
@@ -51,8 +59,12 @@
         }
 
         loadAndApplyFont(selectedFont) {
-          if (!selectedFont) return;
+          if (!selectedFont) {
+            console.warn("No font to apply.");
+            return;
+          }
           
+          console.log("Loading font:", selectedFont);
           const fontLinkId = `google-font-${selectedFont.replace(/ /g, "-")}`;
           
           if (!document.getElementById(fontLinkId)) {
@@ -63,25 +75,30 @@
             document.head.appendChild(link);
             
             link.onload = () => {
+              console.log("Font loaded successfully:", selectedFont);
               this.applyFont(selectedFont);
             };
           } else {
+            console.log("Font already loaded, applying:", selectedFont);
             this.applyFont(selectedFont);
           }
         }
 
         applyFont(selectedFont) {
+          console.log("Applying font:", selectedFont);
           this.textArea.style.fontFamily = `'${selectedFont}', sans-serif`;
         }
 
         submitData() {
           const fontField = JFCustomWidget.getWidgetSetting("fontFieldName");
           if (!fontField) {
+            console.warn("Font field name not set. Cannot submit.");
             JFCustomWidget.sendSubmit({ valid: false, error: "Font field name not set" });
             return;
           }
           
           JFCustomWidget.getFieldsValueByName([fontField], (data) => {
+            console.log("Submitting font data:", data);
             const selectedFont = data && data[fontField] ? data[fontField] : "";
             
             const submissionData = {
@@ -92,6 +109,7 @@
               })
             };
             
+            console.log("Final submission data:", submissionData);
             JFCustomWidget.sendSubmit(submissionData);
           });
         }
